@@ -6,8 +6,8 @@ from DrivenLorenzSystem import DrivenLorenzSystem
 
 NUM_STEPS = 10**4
 TIME_STEP = 0.01
-MASTER_INITIAL_STATE = (10.0, 20.0, 30.0)
-DRIVEN_INITIAL_STATE = (10.1, 20.2, 29.9)
+MASTER_INITIAL_STATE = (10.0, -20.0, 30.0)
+DRIVEN_INITIAL_STATE = (-10.1, 10.2, 9.9)
 
 master_system = MasterLorenzSystem(MASTER_INITIAL_STATE, TIME_STEP)
 master_system_states = np.empty((NUM_STEPS+1, 3))
@@ -24,10 +24,33 @@ for i in range(NUM_STEPS):
     errors[i] = np.linalg.norm(master_system_states[i]-driven_system_states[i])
     times[i] = TIME_STEP*i
 
-plt.figure(figsize=(10, 6))
-plt.plot(times, errors)
-plt.xlabel('Time', fontsize=12)
-plt.ylabel('Error', fontsize=12)
-plt.grid(True, alpha=0.3)
+times_extended = np.append(times, NUM_STEPS * TIME_STEP)
+fig, axes = plt.subplots(2, 2, figsize=(15, 10))
+fig.suptitle('Lorenz Systems Comparison', fontsize=16)
 
+axes[0, 0].plot(times_extended, master_system_states[:, 0], label='Master System', color='blue', linewidth=1.5)
+axes[0, 0].plot(times_extended, driven_system_states[:, 0], label='Driven System', color='red', linewidth=1.5, alpha=0.8)
+axes[0, 0].set_xlabel('Time', fontsize=12)
+axes[0, 0].set_ylabel('X State', fontsize=12)
+axes[0, 0].grid(True, alpha=0.3)
+axes[0, 0].legend()
+
+axes[0, 1].plot(times_extended, master_system_states[:, 1], label='Master System', color='blue', linewidth=1.5)
+axes[0, 1].plot(times_extended, driven_system_states[:, 1], label='Driven System', color='red', linewidth=1.5, alpha=0.8)
+axes[0, 1].set_xlabel('Time', fontsize=12)
+axes[0, 1].set_ylabel('Y State', fontsize=12)
+axes[0, 1].grid(True, alpha=0.3)
+
+axes[1, 0].plot(times_extended, master_system_states[:, 2], label='Master System', color='blue', linewidth=1.5)
+axes[1, 0].plot(times_extended, driven_system_states[:, 2], label='Driven System', color='red', linewidth=1.5, alpha=0.8)
+axes[1, 0].set_xlabel('Time', fontsize=12)
+axes[1, 0].set_ylabel('Z State', fontsize=12)
+axes[1, 0].grid(True, alpha=0.3)
+
+axes[1, 1].plot(times, errors, color='green', linewidth=2)
+axes[1, 1].set_xlabel('Time', fontsize=12)
+axes[1, 1].set_ylabel('Error', fontsize=12)
+axes[1, 1].grid(True, alpha=0.3)
+
+plt.tight_layout()
 plt.show()
