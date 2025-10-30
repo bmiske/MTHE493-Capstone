@@ -19,3 +19,6 @@ class DrivenLorenzSystem:
         y_dot = self.rho*driving_signal - y - x*z
         z_dot = driving_signal*y - self.beta*z
         return np.array([x_dot, y_dot, z_dot])
+    
+    def getError(self, driving_signal):
+        return np.abs(driving_signal-self.xyz[0])

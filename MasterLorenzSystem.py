@@ -9,13 +9,13 @@ class MasterLorenzSystem:
         self.rho = rho
         self.beta = beta
 
-    def nextState(self):
-        self.xyz += self.timestep*self.getDerivatives(self.xyz)
+    def nextState(self, increaseToSigma = 0):
+        self.xyz += self.timestep*self.getDerivatives(self.xyz, increaseToSigma)
         return(self.xyz)
 
-    def getDerivatives(self, xyz):
+    def getDerivatives(self, xyz, increaseToSigma = 0):
         x, y, z = xyz
-        x_dot = self.sigma*(y - x)
+        x_dot = (self.sigma+increaseToSigma)*(y - x)
         y_dot = self.rho*x - y - x*z
         z_dot = x*y - self.beta*z
         return np.array([x_dot, y_dot, z_dot])
