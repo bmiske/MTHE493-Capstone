@@ -12,14 +12,14 @@ SIGMA = 16.0
 RHO = 45.2
 BETA = 4
 SIGMA_OFFSET = 4
-MASTER_INITIAL_STATE = (20.0, -20.0, 30.0)
-DRIVEN_INITIAL_STATE = (-20.1, 10.2, 9.9)
+MASTER_INITIAL_STATE = (20.0, 10.0, 9.9)
+DRIVEN_INITIAL_STATE = (20.1, 10.2, 9.9)
 
 def binaryToSquareWave(symbols, timePerSymbol):
-    lengthOfWave = len(symbols)*timePerSymbol
+    lengthOfWave = NUM_STEPS
     squareWave = np.zeros(lengthOfWave)
     for i in range(len(symbols)):
-        if symbols[i] == '1':
+        if int(symbols[i]) == 1:
             squareWave[i*timePerSymbol:(i+1)*timePerSymbol] = np.ones(timePerSymbol)
     return squareWave
 
@@ -30,8 +30,9 @@ driven_system = DrivenLorenzSystem(DRIVEN_INITIAL_STATE, TIME_STEP, sigma=SIGMA,
 driven_system_states = np.empty((NUM_STEPS+1, 3))
 driven_system_states[0] = (DRIVEN_INITIAL_STATE)
 
-message = '1011010011011100'
-m = binaryToSquareWave(message, math.floor(NUM_STEPS/len(message)))
+MESSAGE = '1011010011011111111101000100101001101000000100'
+SYMBOL_LENGTH = math.floor(NUM_STEPS/len(MESSAGE))
+m = binaryToSquareWave(MESSAGE, SYMBOL_LENGTH)
 
 errors = np.empty(NUM_STEPS)
 times = np.empty(NUM_STEPS)
@@ -43,7 +44,17 @@ for i in range(NUM_STEPS):
     driven_system_states[i+1] = driven_system.nextState(master_system_states[i,0])
     times[i] = i*TIME_STEP
 
+def errorDecoder(errorArray, symbolLength, sensitivity):
+    numSymbols = int(len(errorArray)/symbolLength)
+    decodedMessage = np.zeros(numSymbols)
+    for i in range(numSymbols):
+        avgWindowError = np.average(errorArray[i*symbolLength:(i+1)*symbolLength])
+        if avgWindowError > sensitivity: decodedMessage[i] = 1
+    return decodedMessage
+
+receivedMessage = errorDecoder(errors, SYMBOL_LENGTH, 0.3)
 times_extended = np.append(times, NUM_STEPS * TIME_STEP)
+rm = binaryToSquareWave(receivedMessage, SYMBOL_LENGTH)
 
 fig, axes = plt.subplots(3, 1, figsize=(15, 10))
 fig.suptitle('Lorenz Systems Comparison', fontsize=16)
@@ -56,6 +67,7 @@ axes[0].grid(True, alpha=0.3)
 axes[0].legend()
 
 axes[1].plot(times, m, label='Original Message', color='blue', linewidth=1.5)
+axes[1].plot(times, rm, label='Received Message', color='red', linewidth=1.5)
 axes[1].set_xlabel('Time', fontsize=12)
 axes[1].set_ylabel('Original Message', fontsize=12)
 axes[1].grid(True, alpha=0.3)
