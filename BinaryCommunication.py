@@ -4,9 +4,7 @@ import math
 
 from MasterLorenzSystem import MasterLorenzSystem
 from DrivenLorenzSystem import DrivenLorenzSystem
-import MessageEncoder
 
-NUM_STEPS = 10**4
 TIME_STEP = 0.01
 SIGMA = 16.0
 RHO = 45.2
@@ -18,30 +16,30 @@ WHITE_NOISE_STDEV = 0.2
 ERROR_SENSITIVITY = 0.25
 
 MESSAGE_LEN = 64
+TIME_PER_SYMBOL = 200
 message = np.random.randint(0, 2, MESSAGE_LEN)
-SYMBOL_LENGTH = math.floor(NUM_STEPS/MESSAGE_LEN)
+COMMUNICATION_TIME = MESSAGE_LEN * TIME_PER_SYMBOL
 
-def binaryToSquareWave(symbols, timePerSymbol):
-    lengthOfWave = NUM_STEPS
-    squareWave = np.zeros(lengthOfWave)
+def binaryToSquareWave(symbols, timePerSymbol): 
+    squareWave = np.zeros(len(symbols)*timePerSymbol)
     for i in range(len(symbols)):
         if int(symbols[i]) == 1:
             squareWave[i*timePerSymbol:(i+1)*timePerSymbol] = np.ones(timePerSymbol)
     return squareWave
 
 master_system = MasterLorenzSystem(MASTER_INITIAL_STATE, TIME_STEP, sigma=SIGMA, rho=RHO, beta=BETA)
-master_system_states = np.empty((NUM_STEPS+1, 3))
+master_system_states = np.empty((COMMUNICATION_TIME+1, 3))
 master_system_states[0] = (MASTER_INITIAL_STATE)
 driven_system = DrivenLorenzSystem(DRIVEN_INITIAL_STATE, TIME_STEP, sigma=SIGMA, rho=RHO, beta=BETA)
-driven_system_states = np.empty((NUM_STEPS+1, 3))
+driven_system_states = np.empty((COMMUNICATION_TIME+1, 3))
 driven_system_states[0] = (DRIVEN_INITIAL_STATE)
 
-m = binaryToSquareWave(message, SYMBOL_LENGTH)
+m = binaryToSquareWave(message, TIME_PER_SYMBOL)
 
-errors = np.empty(NUM_STEPS)
-times = np.empty(NUM_STEPS)
+errors = np.empty(COMMUNICATION_TIME)
+times = np.empty(COMMUNICATION_TIME)
 
-for i in range(NUM_STEPS):
+for i in range(COMMUNICATION_TIME):
     if m[i] >= 0.5: master_system_states[i+1] = master_system.nextState(SIGMA_OFFSET)
     else: master_system_states[i+1] = master_system.nextState()
     errors[i] = driven_system.getError(master_system_states[i,0])
@@ -56,9 +54,9 @@ def errorDecoder(errorArray, symbolLength, sensitivity):
         if avgWindowError > sensitivity: decodedMessage[i] = 1
     return decodedMessage
 
-receivedMessage = errorDecoder(errors, SYMBOL_LENGTH, ERROR_SENSITIVITY)
-times_extended = np.append(times, NUM_STEPS * TIME_STEP)
-rm = binaryToSquareWave(receivedMessage, SYMBOL_LENGTH)
+receivedMessage = errorDecoder(errors, TIME_PER_SYMBOL, ERROR_SENSITIVITY)
+times_extended = np.append(times, COMMUNICATION_TIME * TIME_STEP)
+rm = binaryToSquareWave(receivedMessage, TIME_PER_SYMBOL)
 
 fig, axes = plt.subplots(4, 1, figsize=(15, 10))
 fig.suptitle('Lorenz Systems Comparison', fontsize=16)
