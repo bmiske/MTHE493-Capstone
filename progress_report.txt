@@ -1,0 +1,3 @@
+It repeatedly runs the coupled Lorenz simulation while intentionally adding different amounts of random noise to the master’s transmitted x signal, then records how large the synchronization error is at the end of each run. 
+
+By sweeping through noise levels (0 → 3) and averaging over several trials, it produces a curve and plot showing how much noise the system can tolerate before the master and driven trajectories drift apart.

@@ -20,3 +20,21 @@ python TrialSimulation.py
 ```
 
 Avoid calling `/bin/python` because it bypasses the virtual environment and re-introduces the incompatible system packages that are compiled against NumPy 1.x.
+
+## Running tests
+
+Unit tests validate the precision and synchronization guarantees (e.g., double-precision data and burn-in convergence). Execute them with:
+
+```bash
+python -m unittest discover -s tests
+```
+
+## Noise robustness experiment
+
+Run the dedicated sweep to reproduce the Gaussian-noise study and regenerate `image/noise_robustness.png`:
+
+```bash
+python NoiseRobustnessStudy.py
+```
+
+Results and interpretation are summarized in `docs/noise_robustness.md`, and the raw dataset is exported to `data/noise_robustness.csv` for further analysis.

@@ -20,13 +20,28 @@ def run_simulation(
     driven_initial_state=DRIVEN_INITIAL_STATE,
     burn_in_steps=BURN_IN_STEPS,
     sample_stride=SAMPLE_STRIDE,
+    noise_std=0.0,
+    random_seed=None,
 ):
-    """Integrate coupled Lorenz systems and return sampled trajectories plus errors."""
+    """
+    Integrate coupled Lorenz systems and return sampled trajectories plus errors.
+
+    Args:
+        num_steps: Total integration steps.
+        timestep: RK4 timestep size.
+        master_initial_state: Starting state for the master system.
+        driven_initial_state: Starting state for the driven system.
+        burn_in_steps: Steps ignored when computing the error metric.
+        sample_stride: Every `sample_stride`-th state is stored.
+        noise_std: Standard deviation of zero-mean Gaussian noise added to the driving signal.
+        random_seed: Seed forwarded to NumPy's default RNG for reproducibility when injecting noise.
+    """
     if burn_in_steps >= num_steps:
         raise ValueError("burn_in_steps must be smaller than num_steps")
 
     master_system = MasterLorenzSystem(master_initial_state, timestep)
     driven_system = DrivenLorenzSystem(driven_initial_state, timestep)
+    rng = np.random.default_rng(random_seed)
 
     sample_times = [0.0]
     master_samples = [np.array(master_initial_state, dtype=float)]
@@ -37,7 +52,12 @@ def run_simulation(
 
     for step in range(num_steps):
         master_state = master_system.nextState()
-        driven_state = driven_system.nextState(master_state[0])
+        driving_signal = master_state[0]
+
+        if noise_std > 0.0:
+            driving_signal = driving_signal + rng.normal(0.0, noise_std)
+
+        driven_state = driven_system.nextState(driving_signal)
 
         step_time = (step + 1)*timestep
 
