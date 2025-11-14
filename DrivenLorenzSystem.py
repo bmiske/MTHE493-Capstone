@@ -9,6 +9,18 @@ class DrivenLorenzSystem:
         self.rho = rho
         self.beta = beta
 
+    def getCurrentState(self):
+        return(self.xyz)
+    
+    def getXState(self):
+        return(self.xyz[0])
+    
+    def getYState(self):
+        return(self.xyz[1])
+    
+    def getZState(self):
+        return(self.xyz[2])
+
     def nextState(self, driving_signal):
         self.xyz += self.timestep*self.getDerivatives(self.xyz, driving_signal)
         return(self.xyz)

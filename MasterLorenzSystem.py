@@ -9,6 +9,18 @@ class MasterLorenzSystem:
         self.rho = rho
         self.beta = beta
 
+    def getXState(self):
+        return(self.xyz[0])
+    
+    def getYState(self):
+        return(self.xyz[1])
+    
+    def getZState(self):
+        return(self.xyz[2])
+
+    def getCurrentState(self):
+        return(self.xyz)
+
     def nextState(self, increaseToSigma = 0):
         self.xyz += self.timestep*self.getDerivatives(self.xyz, increaseToSigma)
         return(self.xyz)

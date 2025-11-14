@@ -1,90 +1,171 @@
-import matplotlib.pyplot as plt
 import numpy as np
-import math
 
 from MasterLorenzSystem import MasterLorenzSystem
 from DrivenLorenzSystem import DrivenLorenzSystem
+from typing import Tuple
 
-TIME_STEP = 0.01
-SIGMA = 16.0
-RHO = 45.2
-BETA = 4
-SIGMA_OFFSET = 5.5
-MASTER_INITIAL_STATE = (20.0, 10.0, 9.9)
-DRIVEN_INITIAL_STATE = (20.1, 10.2, 9.9)
-WHITE_NOISE_STDEV = 0.2
-ERROR_SENSITIVITY = 0.25
+class BinaryCommunicationParameters:
 
-MESSAGE_LEN = 64
-TIME_PER_SYMBOL = 200
-message = np.random.randint(0, 2, MESSAGE_LEN)
-COMMUNICATION_TIME = MESSAGE_LEN * TIME_PER_SYMBOL
+    # Default values for test parameters
+    DEFAULT_TIME_STEPS_PER_SYMBOL = 200
+    DEFAULT_ERROR_THRESHOLD = 0.2
+    DEFAULT_SIGMA_OFFSET = 5.0
+    DEFAULT_TRANSITION_TIME_STEPS = 100
+    DEFAULT_WHITE_NOISE_STD_DEV = 0.1
+    DEFAULT_TIME_STEP = 0.01
+    DEFAULT_SIGMA = 16.0
+    DEFAULT_BETA = 4.0
+    DEFAULT_RHO = 45.0
+    DEFAULT_MASTER_INITIAL_STATE = (20.0, 10.0, 9.9)
+    DEFAULT_DRIVEN_INITIAL_STATE = (20.1, 10.2, 9.9)
 
-def binaryToSquareWave(symbols, timePerSymbol): 
-    squareWave = np.zeros(len(symbols)*timePerSymbol)
-    for i in range(len(symbols)):
-        if int(symbols[i]) == 1:
-            squareWave[i*timePerSymbol:(i+1)*timePerSymbol] = np.ones(timePerSymbol)
-    return squareWave
+    def __init__(
+        self, 
+        time_steps_per_symbol: int = DEFAULT_TIME_STEPS_PER_SYMBOL,
+        error_threshold: float = DEFAULT_ERROR_THRESHOLD,
+        sigma_offset: float = DEFAULT_SIGMA_OFFSET,
+        transition_time_steps: int = DEFAULT_TRANSITION_TIME_STEPS,
+        white_noise_std_dev: float = DEFAULT_WHITE_NOISE_STD_DEV,
+        time_step: float = DEFAULT_TIME_STEP,
+        sigma: float = DEFAULT_SIGMA,
+        beta: float = DEFAULT_BETA,
+        rho: float = DEFAULT_RHO,
+        master_system_initial_state: Tuple[float, float, float] = DEFAULT_MASTER_INITIAL_STATE,
+        driven_system_initial_state: Tuple[float, float, float] = DEFAULT_DRIVEN_INITIAL_STATE
+    ):
+        """
+        Parameters
+        -------------
+        message: Array or String of bits                                                          
+            The message to be encoded and sent using the binary communication. Defaults to a random 64 bit message.
+        timeStepsPerSymbol: int
+            The amount of time used to send each symbol of the message
+        errorThreshold: float
+            The amount of desynchronization error required before the bit is decoded as a 1
+        sigmaOffset: float
+            The amount that the sigma parameter of the transmitting system is increased by when transmitting a 1 bit
+        transitionTimeSteps: int
+            The amount of time steps waited before averaging, to allow the system to synchronize/desynchronize
+        whiteNoiseStDev: float
+            The standard deviation of the gaussian white noise added to the transmitted signal
+        timeStep: float
+            How much time passes inbetween each iteration of the chaotic systems
+        sigma: float
+            A parameter used for the Lorenz System. Sigma of the transmitting system is increased by sigmaOffset when transmitting a 1
+        beta: float
+            A parameter used for the Lorenz System.
+        rho: float
+            A parameter used for the Lorenz System.
+        masterSystemInitialState: float[3]
+            An ordered list contiaing the intial x, y, and z states of the master (transmitting) system
+        drivenSystemInitialState: float[3]
+            An ordered list contiaing the intial x, y, and z states of the driven (receiving) system
+        """
 
-master_system = MasterLorenzSystem(MASTER_INITIAL_STATE, TIME_STEP, sigma=SIGMA, rho=RHO, beta=BETA)
-master_system_states = np.empty((COMMUNICATION_TIME+1, 3))
-master_system_states[0] = (MASTER_INITIAL_STATE)
-driven_system = DrivenLorenzSystem(DRIVEN_INITIAL_STATE, TIME_STEP, sigma=SIGMA, rho=RHO, beta=BETA)
-driven_system_states = np.empty((COMMUNICATION_TIME+1, 3))
-driven_system_states[0] = (DRIVEN_INITIAL_STATE)
+        self.time_steps_per_symbol = time_steps_per_symbol
+        self.error_threshold = error_threshold
+        self.transition_time_steps = transition_time_steps
+        self.time_step = time_step
+        self.white_noise_std_dev = white_noise_std_dev
+        self.sigma_offset = sigma_offset
+        self.sigma = sigma
+        self.beta = beta
+        self.rho = rho
+        self.master_system_initial_state = master_system_initial_state
+        self.driven_system_initial_state = driven_system_initial_state
+        
+        self._validate_parameters()
+    
+    def _validate_parameters(self):
+        """Validate parameter values are reasonable."""
+        if self.time_steps_per_symbol <= 0:
+            raise ValueError("time_steps_per_symbol must be positive")
+        if self.error_threshold < 0:
+            raise ValueError("error_threshold must be non-negative")
+        if self.time_step <= 0:
+            raise ValueError("time_step must be positive")
+        if self.transition_time_steps >= self.time_steps_per_symbol:
+            raise ValueError("time_steps_per_symbol must be greater than transition_time_steps")
 
-m = binaryToSquareWave(message, TIME_PER_SYMBOL)
+class BinaryCommunication:
 
-errors = np.empty(COMMUNICATION_TIME)
-times = np.empty(COMMUNICATION_TIME)
+    @staticmethod
+    def binaryToSquareWave(symbols, timePerSymbol): 
+        squareWave = np.zeros(len(symbols)*timePerSymbol)
+        for i in range(len(symbols)):
+            if int(symbols[i]) == 1:
+                squareWave[i*timePerSymbol:(i+1)*timePerSymbol] = np.ones(timePerSymbol)
+            elif int(symbols[i]) != 0:
+                raise ValueError("symbols must be an array of only 0s and 1s")
+        return squareWave
 
-for i in range(COMMUNICATION_TIME):
-    if m[i] >= 0.5: master_system_states[i+1] = master_system.nextState(SIGMA_OFFSET)
-    else: master_system_states[i+1] = master_system.nextState()
-    errors[i] = driven_system.getError(master_system_states[i,0])
-    driven_system_states[i+1] = driven_system.nextState(master_system_states[i,0]+np.random.normal(0, WHITE_NOISE_STDEV))
-    times[i] = i*TIME_STEP
+    @staticmethod
+    def errorDecoder(error_array, symbol_length, sensitivity):
+        num_symbols = int(len(error_array)/symbol_length)
+        decoded_message = np.zeros(num_symbols)
+        for i in range(num_symbols):
+            avg_window_error = np.average(error_array[int((i+0.5)*symbol_length):(i+1)*symbol_length])
+            if avg_window_error > sensitivity: decoded_message[i] = 1
+        return decoded_message
 
-def errorDecoder(errorArray, symbolLength, sensitivity):
-    numSymbols = int(len(errorArray)/symbolLength)
-    decodedMessage = np.zeros(numSymbols)
-    for i in range(numSymbols):
-        avgWindowError = np.average(errorArray[int((i+0.5)*symbolLength):(i+1)*symbolLength])
-        if avgWindowError > sensitivity: decodedMessage[i] = 1
-    return decodedMessage
+    @staticmethod
+    def compareMessages(m1, m2):
+        """
+        Comapares two messages of equal length, and returns the number of differences between them
 
-receivedMessage = errorDecoder(errors, TIME_PER_SYMBOL, ERROR_SENSITIVITY)
-times_extended = np.append(times, COMMUNICATION_TIME * TIME_STEP)
-rm = binaryToSquareWave(receivedMessage, TIME_PER_SYMBOL)
+        Params
+        --------
+        m1: string or array
+        m2: string or array
 
-fig, axes = plt.subplots(4, 1, figsize=(15, 10))
-fig.suptitle('Lorenz Systems Comparison', fontsize=16)
+        Returns
+        --------
+        int
+            Number of mismatched charachters between m1 and m2
+        """
+        if len(m1) != len(m2):
+            raise ValueError("m1 and m2 must have the same length")
+        num_errors = 0
+        for i in range(len(m1)):
+            if m1[i] != m2[i]: num_errors += 1
+        return num_errors 
 
-axes[0].plot(times_extended, master_system_states[:, 0], label='Master System', color='blue', linewidth=1.5)
-axes[0].plot(times_extended, driven_system_states[:, 0], label='Driven System', color='red', linewidth=1.5, alpha=0.8)
-axes[0].set_xlabel('Time', fontsize=12)
-axes[0].set_ylabel('X State', fontsize=12)
-axes[0].grid(True, alpha=0.3)
-axes[0].legend()
+    @staticmethod
+    def BinaryCommunicationTest(test_parameters: BinaryCommunicationParameters, message=None):
+        """
+        Test whether a binary communication with the given parameters succeeds
 
-axes[1].plot(times, rm, label='Received Message', color='red', linewidth=1.5)
-axes[1].plot(times, m, label='Original Message', color='blue', linewidth=1.5)
-axes[1].set_xlabel('Time', fontsize=12)
-axes[1].set_ylabel('Original Message', fontsize=12)
-axes[1].grid(True, alpha=0.3)
-axes[1].legend()
+        Params
+        --------
+        test_parameters: BinaryCommunicationParameters
+            The parameters that the test should be run under
+        message: string or Array
+            A string or array containing bits to be encoded. Should only contain 0s or 1s.
 
-axes[2].plot(times, errors, label='Message Decoding Error', color='blue', linewidth=1.5)
-axes[2].set_xlabel('Time', fontsize=12)
-axes[2].set_ylabel('X-State Error', fontsize=12)
-axes[2].grid(True, alpha=0.3)
+        Returns
+        ---------
+        int
+            The number of errors in the decoded message. 0 if the decoded message matches the input message exactly.
+        """
+        DEFAULT_MESSAGE_LENGTH = 64
+        if not message:
+            message = np.random.randint(0, 2, DEFAULT_MESSAGE_LENGTH)
+        
+        message_length = len(message)
+        total_number_of_time_steps = message_length * test_parameters.time_steps_per_symbol
 
-axes[3].plot(times, rm, label='Received Message', color='red', linewidth=1.5)
-axes[3].set_xlabel('Time', fontsize=12)
-axes[3].set_ylabel('Received Message', fontsize=12)
-axes[3].grid(True, alpha=0.3)
+        m = BinaryCommunication.binaryToSquareWave(message, test_parameters.time_steps_per_symbol)
 
-plt.tight_layout()
-plt.show()
+        master_system = MasterLorenzSystem(test_parameters.master_system_initial_state, test_parameters.time_step, sigma=test_parameters.sigma, rho=test_parameters.rho, beta=test_parameters.beta)
+        driven_system = DrivenLorenzSystem(test_parameters.driven_system_initial_state, test_parameters.time_step, sigma=test_parameters.sigma, rho=test_parameters.rho, beta=test_parameters.beta)
 
+        errors = np.empty(total_number_of_time_steps)
+        for i in range(total_number_of_time_steps):
+            errors[i] = driven_system.getError(master_system.getXState())
+            driven_system.nextState(master_system.getXState()+np.random.normal(0, test_parameters.white_noise_std_dev))
+            if m[i] >= 0.5: master_system.nextState(test_parameters.sigma_offset)
+            else: master_system.nextState()
+        
+        received_message = BinaryCommunication.errorDecoder(errors, test_parameters.time_steps_per_symbol, test_parameters.error_threshold)
+
+        return(BinaryCommunication.compareMessages(message, received_message))
