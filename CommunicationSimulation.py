@@ -72,6 +72,11 @@ axes[2].set_xlabel('Time', fontsize=12)
 axes[2].set_ylabel('Message Error', fontsize=12)
 axes[2].grid(True, alpha=0.3)
 
-plt.tight_layout()
-plt.show()
+# display simulation in windows
+#plt.tight_layout()
+#plt.show()
 
+# display simulation in linux
+plt.tight_layout()
+plt.savefig("binary_communication.png", dpi=200)
+plt.close()
