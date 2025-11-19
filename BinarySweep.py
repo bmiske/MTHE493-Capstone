@@ -28,7 +28,7 @@ for i in symbolTimeList:
     for j in thresholdList:
         for k in sigmaList:
             bitErrorRate = testConfig(i, j, k, noise, trials)
-            print(f"Time Per Symbol = {i}, Threshold = {j:.3f}, Sigma Offset = {k} → Bit Error Rate={bitErrorRate:.4f}")
+            print(f"Time Per Symbol = {i}, Threshold = {j:.3f}, Sigma Offset = {k} → Bit Error Rate = {bitErrorRate:.4f}")
             if best is None or (bitErrorRate < best[0]) or (bitErrorRate == best[0] and i < best[1]):
                 best = (bitErrorRate, i, j, k)
 
