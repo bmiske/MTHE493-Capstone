@@ -77,5 +77,11 @@ axes[3].set_xlabel('Time', fontsize=12)
 axes[3].set_ylabel('Received Message', fontsize=12)
 axes[3].grid(True, alpha=0.3)
 
+# display simulation in windows
+#plt.tight_layout()
+#plt.show()
+
+# display simulation in linux
 plt.tight_layout()
-plt.show()
+plt.savefig("binary_communication.png", dpi=200)
+plt.close()
