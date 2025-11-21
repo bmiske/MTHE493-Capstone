@@ -75,6 +75,11 @@ class BinaryCommunicationParameters:
         self.driven_system_initial_state = driven_system_initial_state
         
         self._validate_parameters()
+
+    def set_time_steps_per_symbol(self, new_time_steps_per_symbol):
+        self.time_steps_per_symbol = new_time_steps_per_symbol
+        self.transition_time_steps = min(self.time_steps_per_symbol, self.transition_time_steps)
+        self._validate_parameters
     
     def _validate_parameters(self):
         """Validate parameter values are reasonable."""
@@ -85,7 +90,7 @@ class BinaryCommunicationParameters:
         if self.time_step <= 0:
             raise ValueError("time_step must be positive")
         if self.transition_time_steps >= self.time_steps_per_symbol:
-            raise ValueError("time_steps_per_symbol must be greater than transition_time_steps")
+            raise ValueError("time_steps_per_symbol must be greater than transition_time_steps")    
 
 class BinaryCommunication:
 
