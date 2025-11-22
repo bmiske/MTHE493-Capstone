@@ -46,7 +46,7 @@ dimensions = [
 #    Real(-20.0, 20.0, name="rho"),
 ]
 
-result = gp_minimize(findMinimumSymbolLength, dimensions, n_calls=50)
+result = gp_minimize(findMinimumSymbolLength, dimensions, n_calls=100)
 
 print(f"Optimal parameters: {result.x}")
 print(f"Shortest symbol length achieved: {result.fun}")
@@ -54,9 +54,9 @@ print(f"Shortest symbol length achieved: {result.fun}")
 
 
 '''
-I have only run this once so far, with 0.1 White Noise Std. Dev. and achieved the following param set:
-    Optimal parameters: [0.2950381815949865, 10.39831407260162, np.int64(0)]
-    Shortest symbol length achieved: 145
+Since fixing the threshold_time bug, I have run this once with the following result:
+    Optimal parameters: [0.1809420537408949, 9.764819670083668, np.int64(110)]
+    Shortest symbol length achieved: 133
 
 I would like to try running more tests, and varying the parameters of the gp_minimize function, and also try with 0.2 noise st.dev.
 This seems really cool though.

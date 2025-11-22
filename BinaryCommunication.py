@@ -105,11 +105,11 @@ class BinaryCommunication:
         return squareWave
 
     @staticmethod
-    def errorDecoder(error_array, symbol_length, sensitivity):
+    def errorDecoder(error_array, symbol_length, transition_time, sensitivity):
         num_symbols = int(len(error_array)/symbol_length)
         decoded_message = np.zeros(num_symbols)
         for i in range(num_symbols):
-            avg_window_error = np.average(error_array[int((i+0.5)*symbol_length):(i+1)*symbol_length])
+            avg_window_error = np.average(error_array[int((i*symbol_length)+transition_time):(i+1)*symbol_length])
             if avg_window_error > sensitivity: decoded_message[i] = 1
         return decoded_message
 
@@ -171,6 +171,6 @@ class BinaryCommunication:
             if m[i] >= 0.5: master_system.nextState(test_parameters.sigma_offset)
             else: master_system.nextState()
         
-        received_message = BinaryCommunication.errorDecoder(errors, test_parameters.time_steps_per_symbol, test_parameters.error_threshold)
+        received_message = BinaryCommunication.errorDecoder(errors, test_parameters.time_steps_per_symbol, test_parameters.transition_time_steps, test_parameters.error_threshold)
 
         return(BinaryCommunication.compareMessages(message, received_message))
