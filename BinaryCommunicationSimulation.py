@@ -17,6 +17,7 @@ ERROR_SENSITIVITY = 0.35
 
 MESSAGE_LEN = 64
 TIME_PER_SYMBOL = 120
+TRANSITION_TIME = TIME_PER_SYMBOL/2
 message = np.random.randint(0, 2, MESSAGE_LEN)
 COMMUNICATION_TIME = MESSAGE_LEN * TIME_PER_SYMBOL
 
@@ -39,7 +40,7 @@ for i in range(COMMUNICATION_TIME):
     driven_system_states[i+1] = driven_system.nextState(master_system_states[i,0]+np.random.normal(0, WHITE_NOISE_STDEV))
     times[i] = i*TIME_STEP
 
-receivedMessage = BinaryCommunication.errorDecoder(errors, TIME_PER_SYMBOL, ERROR_SENSITIVITY)
+receivedMessage = BinaryCommunication.errorDecoder(errors, TIME_PER_SYMBOL, TRANSITION_TIME, ERROR_SENSITIVITY)
 times_extended = np.append(times, COMMUNICATION_TIME * TIME_STEP)
 rm = BinaryCommunication.binaryToSquareWave(receivedMessage, TIME_PER_SYMBOL)
 
