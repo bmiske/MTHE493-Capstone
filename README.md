@@ -38,3 +38,20 @@ python NoiseRobustnessStudy.py
 ```
 
 Results and interpretation are summarized in `docs/noise_robustness.md`, and the raw dataset is exported to `data/noise_robustness.csv` for further analysis.
+
+## Event-triggered threshold optimization
+
+An event-triggered symbol-termination simulation and threshold optimizer are included to support:
+
+- threshold hysteresis (`epsilon0`, `epsilon1`)
+- confidence window (`tconf`)
+- mismatch amplitude (`delta_sigma`)
+- filtered threshold metrics (`metric_filter_alpha`, `abs_dx_floor_ratio`)
+
+Run the built-in CEM (Cross-Entropy Method) parameter search:
+
+```bash
+python -m event_triggered.threshold_optimization
+```
+
+Detailed usage is documented in `docs/event_triggered_threshold_optimization.md`.
