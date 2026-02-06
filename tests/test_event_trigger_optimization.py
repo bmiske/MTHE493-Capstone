@@ -104,6 +104,8 @@ class ThresholdOptimizationTests(unittest.TestCase):
             message_bits=bits,
             noise_std=0.1,
             random_seed=13,
+            evaluation_seeds=[13, 14],
+            evaluation_noise_levels=[0.1, 0.2],
             max_symbol_steps=1000,
             top_k=3,
             config=CEMConfig(iterations=3, population_size=8, elite_fraction=0.25, smoothing=0.6),
@@ -114,6 +116,8 @@ class ThresholdOptimizationTests(unittest.TestCase):
         self.assertEqual(all_scores, sorted(all_scores))
         self.assertEqual(search["best"]["score"], min(all_scores))
         self.assertGreaterEqual(len(search["history"]), 1)
+        self.assertEqual(search["best"]["num_eval_runs"], 4)
+        self.assertIn("ber_std", search["best"])
 
 
 if __name__ == "__main__":

@@ -111,6 +111,9 @@ def run_event_triggered_message(
     use_metric_filter: bool = True,
     metric_filter_alpha: float = 0.3,
     abs_dx_floor_ratio: float = 0.2,
+    force_resync_after_one: bool = True,
+    force_resync_on_timeout: bool = True,
+    resync_steps: int = 200,
     noise_std: float = 0.0,
     random_seed: int | None = None,
     master_initial_state=DEFAULT_MASTER_INITIAL_STATE,
@@ -130,6 +133,8 @@ def run_event_triggered_message(
         raise ValueError("message_bits must contain only 0/1 values")
     if max_symbol_steps <= 0:
         raise ValueError("max_symbol_steps must be > 0")
+    if resync_steps < 0:
+        raise ValueError("resync_steps must be >= 0")
     if not (0.0 < metric_filter_alpha <= 1.0):
         raise ValueError("metric_filter_alpha must be in (0, 1]")
     if abs_dx_floor_ratio < 0.0:
@@ -144,8 +149,28 @@ def run_event_triggered_message(
     symbol_durations = []
     tx_trigger_failures = 0
     rx_timeout_count = 0
+    resync_count = 0
     global_max_error = 0.0
     global_max_metric_error = 0.0
+
+    def _run_resync_phase() -> None:
+        nonlocal global_max_error, global_max_metric_error
+        if resync_steps == 0:
+            return
+        for _ in range(resync_steps):
+            master_state = master.next_state(0.0)
+            driving_signal = master_state[0]
+            if noise_std > 0.0:
+                driving_signal = driving_signal + rng.normal(0.0, noise_std)
+            driven_state = driven.next_state(driving_signal)
+
+            delta = master_state - driven_state
+            norm_error = float(np.linalg.norm(delta))
+            raw_metric = _error_metric(master_state, driven_state, metric)
+            if metric == "abs_dx":
+                raw_metric = max(raw_metric, abs_dx_floor_ratio*norm_error)
+            global_max_error = max(global_max_error, norm_error)
+            global_max_metric_error = max(global_max_metric_error, raw_metric)
 
     for bit in bits:
         sigma_offset = params.delta_sigma*bit
@@ -212,12 +237,19 @@ def run_event_triggered_message(
         if not tx_finished:
             tx_trigger_failures += 1
 
+        timed_out = False
         if rx_decoded is None:
             rx_timeout_count += 1
+            timed_out = True
             rx_decoded = _decode_from_error(error_value, params)
 
         decoded_bits.append(rx_decoded)
         symbol_durations.append(steps_taken*timestep)
+
+        should_resync = (force_resync_after_one and bit == 1) or (force_resync_on_timeout and timed_out)
+        if should_resync:
+            resync_count += 1
+            _run_resync_phase()
 
     decoded = np.array(decoded_bits, dtype=int)
     transmitted = np.array(bits, dtype=int)
@@ -232,6 +264,7 @@ def run_event_triggered_message(
         "max_symbol_duration": float(np.max(durations)) if durations.size else 0.0,
         "tx_trigger_failure_rate": float(tx_trigger_failures / max(1, len(bits))),
         "rx_timeout_rate": float(rx_timeout_count / max(1, len(bits))),
+        "resync_rate": float(resync_count / max(1, len(bits))),
         "max_error": float(global_max_error),
         "max_metric_error": float(global_max_metric_error),
         "params": params,
