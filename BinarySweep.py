@@ -17,11 +17,11 @@ def testConfig(symbolTime, threshold, sigma, noise, trials):
 
 # adjust parameters for testing
 # be aware that the longer the lists, the longer the runtime
-symbolTimeList = [120, 140, 160, 180, 200, 220, 240]
-thresholdList = np.linspace(0.15, 0.6, 10)
-sigmaList = [5, 7, 10, 12]
+symbolTimeList = list(range(150, 750, 50))
+thresholdList = np.round(np.arange(0.05, 1, 0.05), 3)
+sigmaList = list(range(1, 20))
 noise = 0.2
-trials = 10
+trials = 100
 
 best = None
 for i in symbolTimeList:
