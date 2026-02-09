@@ -69,7 +69,8 @@ received_bits = []
 t = 0.0
 
 for bit in message:
-    good_count = 0
+    zero_count = 0
+    one_count = 0
     steps_this_symbol = 0
     triggered_bit = None  # what receiver decides for this symbol
 
@@ -98,26 +99,21 @@ for bit in message:
 
         steps_this_symbol += 1
 
-        # Event logic with hysteresis + dwell time
-        if bit == 0:
-            if r <= eps0:
-                good_count += 1
-            else:
-                good_count = 0
-
-            if good_count >= Nconf:
+        if r <= eps0:
+            zero_count += 1
+            one_count = 0
+            if zero_count >= Nconf:
                 triggered_bit = 0  # receiver interprets this as a 0-region trigger
                 break
-
-        else:  # bit == 1
-            if r >= eps1:
-                good_count += 1
-            else:
-                good_count = 0
-
-            if good_count >= Nconf:
+        elif r >= eps1:
+            one_count += 1
+            zero_count = 0
+            if one_count >= Nconf:
                 triggered_bit = 1  # receiver interprets this as a 1-region trigger
                 break
+        else:
+            zero_count = 0
+            one_count = 0
 
         # Safety escape if event never triggers
         if steps_this_symbol >= MAX_STEPS_PER_SYMBOL:
@@ -221,3 +217,6 @@ axes[3].legend()
 plt.tight_layout()
 plt.savefig("event_trigger_binary_communication.png", dpi=200)
 plt.close()
+
+print(message)
+print(received_bits)
