@@ -91,6 +91,12 @@ class EventTriggeredParameters:
         if self.epsilon_one < self.epsilon_zero:
             raise ValueError("epsilon_zero must be less than epsilon_one") 
 
+class EventTriggeredTestResults:
+
+    def __init__(self, errors: int, time_steps: int):
+        self.errors = errors
+        self.time_steps = time_steps
+
 class EventTriggeredCommunication:
 
     @staticmethod
@@ -216,4 +222,8 @@ class EventTriggeredCommunication:
             event_times.append(t)
 
         received_bits = np.array(received_bits, dtype=int)
-        return(EventTriggeredCommunication.compareMessages(message, received_bits))
+
+        num_errors = EventTriggeredCommunication.compareMessages(message, received_bits)
+        num_time_steps = len(times)
+        result = EventTriggeredTestResults(num_errors, num_time_steps)
+        return(result)

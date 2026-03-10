@@ -17,21 +17,29 @@ def findMinimumErrorRate(params):
     )
     
     errors = 0
+    time_steps = 0
     for _ in range(NUMBER_OF_INITIAL_TRIALS):
-        errors += EventTriggeredCommunication.EventTriggeredTest(test_params)
+        errors += (EventTriggeredCommunication.EventTriggeredTest(test_params)).errors
+        time_steps += (EventTriggeredCommunication.EventTriggeredTest(test_params)).time_steps
     if (errors/NUMBER_OF_INITIAL_TRIALS) <= INITIAL_ERROR_RATE_NEEDED_TO_CONTINUE: 
         for _ in range (NUMBER_OF_ADDITIONAL_TRIALS):
-            errors += EventTriggeredCommunication.EventTriggeredTest(test_params)
-        print(f"Achieved {errors/(NUMBER_OF_INITIAL_TRIALS+NUMBER_OF_ADDITIONAL_TRIALS):.3f} error rate with params: epsilon_zero={epsilon_zero:.2f}, epsilon_one={epsilon_one:.2f} sigma_offset={sigma_offset:.2f}, conf_time={conf_time_steps}")
+            errors += (EventTriggeredCommunication.EventTriggeredTest(test_params)).errors
+            time_steps += (EventTriggeredCommunication.EventTriggeredTest(test_params)).time_steps
+        print(f"Achieved {errors/(NUMBER_OF_INITIAL_TRIALS+NUMBER_OF_ADDITIONAL_TRIALS):.3f} error rate with params:"+
+            f"epsilon_zero={epsilon_zero:.2f}, epsilon_one={epsilon_one:.2f} sigma_offset={sigma_offset:.2f}, conf_time={conf_time_steps} - "+
+            f"Average Time Steps: {time_steps/(NUMBER_OF_INITIAL_TRIALS+NUMBER_OF_ADDITIONAL_TRIALS):.3f}")
         return (errors/(NUMBER_OF_INITIAL_TRIALS+NUMBER_OF_ADDITIONAL_TRIALS))
-    print(f"Achieved {errors/(NUMBER_OF_INITIAL_TRIALS):.3f} error rate with params: epsilon_zero={epsilon_zero:.2f}, epsilon_one={epsilon_one:.2f} sigma_offset={sigma_offset:.2f}, conf_time={conf_time_steps}. Ending early.")
+    print(f"Achieved {errors/(NUMBER_OF_INITIAL_TRIALS+NUMBER_OF_ADDITIONAL_TRIALS):.3f} error rate with params:"+
+        f"epsilon_zero={epsilon_zero:.2f}, epsilon_one={epsilon_one:.2f} sigma_offset={sigma_offset:.2f}, conf_time={conf_time_steps} - "+
+        f"Average Time Steps: {time_steps/(NUMBER_OF_INITIAL_TRIALS+NUMBER_OF_ADDITIONAL_TRIALS):.3f}. "+
+        "Ending Early.")
     return (errors/(NUMBER_OF_INITIAL_TRIALS))
 
 dimensions = [
     Real(0.01, 0.5, name="epsilon_zero"),
     Real(0.5, 2.0, name="epsilon_one"),
     Real(5.0, 20.0, name="sigma_offset"),
-    Integer(50, 150, name="confidence_time_steps"),
+    Integer(10, 50, name="confidence_time_steps"),
 #   Commented these params out since changing them can cause Lorenz to not converge. Would like to experiment with some variations though
 #    Real(-20.0, 20.0, name="sigma"),
 #    Real(-20.0, 20.0, name="beta"),
