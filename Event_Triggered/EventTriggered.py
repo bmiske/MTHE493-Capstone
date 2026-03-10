@@ -141,7 +141,6 @@ class EventTriggeredCommunication:
         DEFAULT_MESSAGE_LENGTH = 64
         if not message:
             message = np.random.randint(0, 2, DEFAULT_MESSAGE_LENGTH)
-        message_length = len(message)
 
         master_system = MasterLorenzSystem(test_parameters.master_system_initial_state, test_parameters.time_step, sigma=test_parameters.sigma, rho=test_parameters.rho, beta=test_parameters.beta)
         driven_system = DrivenLorenzSystem(test_parameters.driven_system_initial_state, test_parameters.time_step, sigma=test_parameters.sigma, rho=test_parameters.rho, beta=test_parameters.beta)
