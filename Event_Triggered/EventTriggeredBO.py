@@ -29,9 +29,9 @@ def findMinimumErrorRate(params):
             f"epsilon_zero={epsilon_zero:.2f}, epsilon_one={epsilon_one:.2f} sigma_offset={sigma_offset:.2f}, conf_time={conf_time_steps} - "+
             f"Average Time Steps: {time_steps/(NUMBER_OF_INITIAL_TRIALS+NUMBER_OF_ADDITIONAL_TRIALS):.3f}")
         return (errors/(NUMBER_OF_INITIAL_TRIALS+NUMBER_OF_ADDITIONAL_TRIALS))
-    print(f"Achieved {errors/(NUMBER_OF_INITIAL_TRIALS+NUMBER_OF_ADDITIONAL_TRIALS):.3f} error rate with params:"+
+    print(f"Achieved {errors/(NUMBER_OF_INITIAL_TRIALS):.3f} error rate with params:"+
         f"epsilon_zero={epsilon_zero:.2f}, epsilon_one={epsilon_one:.2f} sigma_offset={sigma_offset:.2f}, conf_time={conf_time_steps} - "+
-        f"Average Time Steps: {time_steps/(NUMBER_OF_INITIAL_TRIALS+NUMBER_OF_ADDITIONAL_TRIALS):.3f}. "+
+        f"Average Time Steps: {time_steps/(NUMBER_OF_INITIAL_TRIALS):.3f}. "+
         "Ending Early.")
     return (errors/(NUMBER_OF_INITIAL_TRIALS))
 
