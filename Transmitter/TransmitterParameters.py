@@ -9,10 +9,12 @@ class TransmitterParameters:
     DEFAULT_TRANSITION_TIME_STEPS = 100
     DEFAULT_WHITE_NOISE_STD_DEV = 0.1
     DEFAULT_TIME_STEP = 0.01
-    DEFAULT_SIGMA = 16.0
-    DEFAULT_BETA = 4.0
-    DEFAULT_RHO = 45.0
+    DEFAULT_SIGMA = 10.0
+    DEFAULT_BETA = 8/3
+    DEFAULT_RHO = 28.0
     DEFAULT_INITIAL_STATE = (20.0, 10.0, 9.9)
+    DEFAULT_X_MAX = 20 # With default params, x roughly bounded in [-20,20]
+    DEFAULT_FREQ_OFFSET_MAX_HZ = 10_000
 
     def __init__(
         self, 
@@ -26,6 +28,8 @@ class TransmitterParameters:
         beta: float = DEFAULT_BETA,
         rho: float = DEFAULT_RHO,
         initial_state: Tuple[float, float, float] = DEFAULT_INITIAL_STATE,
+        x_max: float = DEFAULT_X_MAX,
+        freq_offset_max_hz: int = DEFAULT_FREQ_OFFSET_MAX_HZ,
     ):
         """
         Parameters
@@ -52,6 +56,8 @@ class TransmitterParameters:
             A parameter used for the Lorenz System.
         initial_state: float[3]
             An ordered list contiaing the intial x, y, and z states of the transmitting system
+        x_max: float
+            The value x is bounded between given choices of sigma, beta, and rho. X should be an element of [-x_max, x_max]
         """
 
         self.time_steps_per_symbol = time_steps_per_symbol
@@ -64,6 +70,8 @@ class TransmitterParameters:
         self.beta = beta
         self.rho = rho
         self.initial_state = initial_state
+        self.x_max = x_max
+        self.freq_offset_max_hz = freq_offset_max_hz
         
         self._validate_parameters()
     
