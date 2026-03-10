@@ -170,14 +170,14 @@ class EventTriggeredCommunication:
 
             while True:
                 # Use current master x as the transmitted driving signal
-                xm = master_system.getXState()
+                xm = master_system.getXState() + np.random.normal(0, test_parameters.white_noise_std_dev)
 
                 # Measure sync error BEFORE stepping (consistent with your original test style)
                 r = driven_system.getError(xm)
                 errors.append(r)
 
                 # Step driven system with noisy transmitted xm
-                driven_system.nextState(xm + np.random.normal(0, test_parameters.white_noise_std_dev))
+                driven_system.nextState(xm)
 
                 # Step master system, modulating sigma when transmitting a 1
                 if bit == 1:
