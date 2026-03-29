@@ -4,6 +4,28 @@ from MasterLorenzSystem import MasterLorenzSystem
 from DrivenLorenzSystem import DrivenLorenzSystem
 from typing import Tuple
 
+class RingBuffer:
+
+    def __init__(
+            self,
+            buffer_size: int
+    ):
+        self.buffer_size = buffer_size
+        self.buffer = []
+        for _ in range(buffer_size):
+            self.buffer.append(0.0)
+        self.current_index = 0
+
+    def get_average(self):
+        sum = 0
+        for item in self.buffer:
+            sum += item
+        return(sum/self.buffer_size)
+    
+    def add_item(self, item: float):
+        self.buffer[self.current_index] = item
+        self.current_index = (self.current_index+1)%self.buffer_size
+
 class EventTriggeredParameters:
 
     # Default values for test parameters
@@ -20,6 +42,7 @@ class EventTriggeredParameters:
     DEFAULT_EPSILON_ONE = 1.25
     DEFAULT_CONFIDENCE_TIME_STEPS = 20
     DEFAULT_MAX_STEPS_PER_SYMBOL = 5000
+    DEFAULT_AVERAGE_WINDOW_SIZE = 10
 
     def __init__(
         self, 
@@ -35,6 +58,7 @@ class EventTriggeredParameters:
         epsilon_one: float = DEFAULT_EPSILON_ONE,
         confidence_time_steps: int = DEFAULT_CONFIDENCE_TIME_STEPS,
         max_steps_per_symbol: int = DEFAULT_MAX_STEPS_PER_SYMBOL,
+        average_window_size: int = DEFAULT_AVERAGE_WINDOW_SIZE
     ):
         """
         Parameters
@@ -76,6 +100,7 @@ class EventTriggeredParameters:
         self.epsilon_one = epsilon_one
         self.max_steps_per_symbol = max_steps_per_symbol
         self.confidence_time_steps = confidence_time_steps
+        self.average_window_size = average_window_size
         
         self._validate_parameters()
 
@@ -161,6 +186,7 @@ class EventTriggeredCommunication:
         # Main event-triggered simulation
         # -----------------------------
         t = 0.0
+        moving_average_window = RingBuffer(test_parameters.average_window_size)
 
         for bit in message:
             zero_count = 0
@@ -174,7 +200,8 @@ class EventTriggeredCommunication:
 
                 # Measure sync error BEFORE stepping (consistent with your original test style)
                 r = driven_system.getError(xm)
-                errors.append(r)
+                moving_average_window.add_item(r)
+                errors.append(moving_average_window.get_average())
 
                 # Step driven system with noisy transmitted xm
                 driven_system.nextState(xm)
