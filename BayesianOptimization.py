@@ -38,17 +38,17 @@ def findMinimumSymbolLength(params):
 
 def findMinimumErrorRate(params):
     
-    SYMBOL_TIME_STEPS = 100
-    NUMBER_OF_INITIAL_TRIALS = 10               #Trials initially completed to get rough idea of error rate
+    SYMBOL_TIME_STEPS = 130
+    NUMBER_OF_INITIAL_TRIALS = 30               #Trials initially completed to get rough idea of error rate
     INITIAL_ERROR_RATE_NEEDED_TO_CONTINUE = 1.0 #Maximum error rate to continue trials
-    NUMBER_OF_ADDITIONAL_TRIALS = 40            #Used in cases where error rate is less than above rate
-
+    NUMBER_OF_ADDITIONAL_TRIALS = 70            #Used in cases where error rate is less than above rate
+ 
     error_threshold, sigma_offset, transition_time_steps = params
     test_params = BinaryCommunicationParameters (
         error_threshold = error_threshold,
         sigma_offset = sigma_offset,
         transition_time_steps = transition_time_steps,
-        white_noise_std_dev=0
+        white_noise_std_dev=0.1
     )
     test_params.set_time_steps_per_symbol(SYMBOL_TIME_STEPS)
     
@@ -66,7 +66,7 @@ def findMinimumErrorRate(params):
 dimensions = [
     Real(0.01, 1.5, name="error_threshold"),
     Real(5.0, 40.0, name="sigma_offset"),
-    Integer(50, 150, name="transition_time"),
+    Integer(30, 130, name="transition_time"),
 #   Commented these params out since changing them can cause Lorenz to not converge. Would like to experiment with some variations though
 #    Real(-20.0, 20.0, name="sigma"),
 #    Real(-20.0, 20.0, name="beta"),
@@ -114,4 +114,31 @@ Trying without any white noise, symbol_len=130:
 Predictably, error threshold should be lower if no WN
 
 -Ben
+
+March 29: Finding optimal accuracy at symbol lengths 100, 120, 140, 160, 180, and 200:
+All tests conducted with 0.1 AWGN, and min 100 trials at optimal:
+
+100:
+Optimal parameters: [0.5053060121080802, 16.935974363753527, np.int64(76)]
+Minimal error rate achieved: 1.09
+
+120:
+Optimal parameters: [0.3865732549397399, 16.9512783131441, np.int64(98)]
+Minimal error rate achieved: 0.36
+
+140:
+Optimal parameters: [0.2623758292747531, 19.19955476428411, np.int64(117)]
+Minimal error rate achieved: 0.05
+
+160:
+Optimal parameters: [0.36803638400630945, 21.866183469294334, np.int64(100)]
+Minimal error rate achieved: 0.03
+
+180:
+Optimal parameters: [0.3473963162600759, 21.99607499797826, np.int64(151)]
+Minimal error rate achieved: 0.0
+
+
+
+
 '''
