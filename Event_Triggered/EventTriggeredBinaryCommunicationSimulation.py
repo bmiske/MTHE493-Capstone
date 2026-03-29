@@ -19,7 +19,7 @@ SIGMA_OFFSET = 10.0
 MASTER_INITIAL_STATE = np.array((20.0, 10.0, 9.9), dtype=float)
 DRIVEN_INITIAL_STATE = np.array((20.1, 10.2, 9.9), dtype=float)
 
-WHITE_NOISE_STDEV = 0.2
+WHITE_NOISE_STDEV = 0.1
 
 # Message
 MESSAGE_LEN = 64

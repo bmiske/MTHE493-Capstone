@@ -2,7 +2,7 @@ from skopt import gp_minimize
 from skopt.space import Real, Integer
 from EventTriggered import EventTriggeredParameters, EventTriggeredCommunication
 
-
+SYMBOLS_PER_TRIAL = 64
 
 # This is the cost function currently used, which only minimizes error rate
 def findMinimumErrorRate(params):
@@ -12,13 +12,13 @@ def findMinimumErrorRate(params):
     NUMBER_OF_ADDITIONAL_TRIALS = 40            #Used in cases where error rate is less than above rate
 
     # Unpackages parameters and then instantiates an EventTriggeredParameters varialble using the supplied values
-    epsilon_zero, epsilon_one, sigma_offset, conf_time_steps, max_time_steps = params
+    epsilon_zero, epsilon_one, sigma_offset, conf_time_steps, moving_average_window_size = params
     test_params = EventTriggeredParameters (
         epsilon_zero=epsilon_zero,
         epsilon_one=epsilon_one,
         sigma_offset = sigma_offset,
         confidence_time_steps = conf_time_steps,
-        max_steps_per_symbol = max_time_steps,
+        average_window_size = moving_average_window_size,
     )
     
     errors = 0
@@ -33,12 +33,12 @@ def findMinimumErrorRate(params):
             errors += (EventTriggeredCommunication.EventTriggeredTest(test_params)).errors
             time_steps += (EventTriggeredCommunication.EventTriggeredTest(test_params)).time_steps
         print(f"Achieved {errors/(NUMBER_OF_INITIAL_TRIALS+NUMBER_OF_ADDITIONAL_TRIALS):.3f} error rate with params:"+
-            f"epsilon_zero={epsilon_zero:.2f}, epsilon_one={epsilon_one:.2f} sigma_offset={sigma_offset:.2f}, conf_time={conf_time_steps}, max_time_steps={max_time_steps} - "+
-            f"Average Time Steps: {time_steps/(NUMBER_OF_INITIAL_TRIALS+NUMBER_OF_ADDITIONAL_TRIALS):.3f}")
+            f"epsilon_zero={epsilon_zero:.2f}, epsilon_one={epsilon_one:.2f} sigma_offset={sigma_offset:.2f}, conf_time={conf_time_steps}, window_size={moving_average_window_size} - "+
+            f"Average Time Steps per Symbol: {time_steps/((NUMBER_OF_INITIAL_TRIALS+NUMBER_OF_ADDITIONAL_TRIALS)*SYMBOLS_PER_TRIAL):.3f}")
         return (errors/(NUMBER_OF_INITIAL_TRIALS+NUMBER_OF_ADDITIONAL_TRIALS))
     print(f"Achieved {errors/(NUMBER_OF_INITIAL_TRIALS):.3f} error rate with params:"+
-        f"epsilon_zero={epsilon_zero:.2f}, epsilon_one={epsilon_one:.2f} sigma_offset={sigma_offset:.2f}, conf_time={conf_time_steps}, max_time_steps={max_time_steps} - "+
-        f"Average Time Steps: {time_steps/(NUMBER_OF_INITIAL_TRIALS):.3f}. "+
+        f"epsilon_zero={epsilon_zero:.2f}, epsilon_one={epsilon_one:.2f} sigma_offset={sigma_offset:.2f}, conf_time={conf_time_steps}, window_size={moving_average_window_size} - "+
+        f"Average Time Steps per Symbol: {time_steps/(NUMBER_OF_INITIAL_TRIALS*SYMBOLS_PER_TRIAL):.3f}. "+
         "Ending Early.")
     # We return the final error rate to the optimization function.
     return (errors/(NUMBER_OF_INITIAL_TRIALS))
@@ -52,7 +52,8 @@ dimensions = [
     Real(0.5, 2.0, name="epsilon_one"),
     Real(5.0, 20.0, name="sigma_offset"),
     Integer(10, 50, name="confidence_time_steps"),
-    Integer(100, 300, name="max_time_steps"),
+    Integer(5, 30, name="moving_average_window_size"),
+    # Integer(999, 1000, name="max_time_steps"), Depreciated
 ]
 
 # This is the bayseian optimization function. 
