@@ -4,65 +4,104 @@ from EventTriggered import EventTriggeredParameters, EventTriggeredCommunication
 
 SYMBOLS_PER_TRIAL = 64
 
-# This is the cost function currently used, which only minimizes error rate
-def findMinimumErrorRate(params):
-    
-    NUMBER_OF_INITIAL_TRIALS = 10               #Trials initially completed to get rough idea of error rate
-    INITIAL_ERROR_RATE_NEEDED_TO_CONTINUE = 1.0 #Maximum error rate to continue trials
-    NUMBER_OF_ADDITIONAL_TRIALS = 40            #Used in cases where error rate is less than above rate
+# C = r(e/e0) + (1-r)(t/t0)
+#   r  = error rate weighting constant between 0 and 1
+#   e  = error rate with current parameters
+#   e0 = baseline error rate from other optimal algorithm
+#   t  = average time steps per symbol with current parameters
+#   t0 = baseline time steps per symbol from other optimal algorithm
 
-    # Unpackages parameters and then instantiates an EventTriggeredParameters varialble using the supplied values
+def findMinimumCost(params):
+    NUMBER_OF_INITIAL_TRIALS = 10
+    INITIAL_COST_NEEDED_TO_CONTINUE = 1.0
+    NUMBER_OF_ADDITIONAL_TRIALS = 40
+
+    WEIGHT_CONSTANT = 0.75
+    BASELINE_ERROR_RATE = 0.1
+    BASELINE_TIME_STEPS = 150
+
+    # Unpack parameters and create test configuration
     epsilon_zero, epsilon_one, sigma_offset, conf_time_steps, moving_average_window_size = params
-    test_params = EventTriggeredParameters (
+    test_params = EventTriggeredParameters(
         epsilon_zero=epsilon_zero,
         epsilon_one=epsilon_one,
-        sigma_offset = sigma_offset,
-        confidence_time_steps = conf_time_steps,
-        average_window_size = moving_average_window_size,
+        sigma_offset=sigma_offset,
+        confidence_time_steps=conf_time_steps,
+        average_window_size=moving_average_window_size,
     )
-    
+
     errors = 0
     time_steps = 0
-    # First runs a preliminary number of trials. If preforms poorly, doesn't waste time on further computation
+
+    # Initial trials
     for _ in range(NUMBER_OF_INITIAL_TRIALS):
-        errors += (EventTriggeredCommunication.EventTriggeredTest(test_params)).errors
-        time_steps += (EventTriggeredCommunication.EventTriggeredTest(test_params)).time_steps
-    # If the error rate is belowed a designated threshold, we attempt more trials to get a better estimation of performance
-    if (errors/NUMBER_OF_INITIAL_TRIALS) <= INITIAL_ERROR_RATE_NEEDED_TO_CONTINUE: 
-        for _ in range (NUMBER_OF_ADDITIONAL_TRIALS):
-            errors += (EventTriggeredCommunication.EventTriggeredTest(test_params)).errors
-            time_steps += (EventTriggeredCommunication.EventTriggeredTest(test_params)).time_steps
-        print(f"Achieved {errors/(NUMBER_OF_INITIAL_TRIALS+NUMBER_OF_ADDITIONAL_TRIALS):.3f} error rate with params:"+
-            f"epsilon_zero={epsilon_zero:.2f}, epsilon_one={epsilon_one:.2f} sigma_offset={sigma_offset:.2f}, conf_time={conf_time_steps}, window_size={moving_average_window_size} - "+
-            f"Average Time Steps per Symbol: {time_steps/((NUMBER_OF_INITIAL_TRIALS+NUMBER_OF_ADDITIONAL_TRIALS)*SYMBOLS_PER_TRIAL):.3f}")
-        return (errors/(NUMBER_OF_INITIAL_TRIALS+NUMBER_OF_ADDITIONAL_TRIALS))
-    print(f"Achieved {errors/(NUMBER_OF_INITIAL_TRIALS):.3f} error rate with params:"+
-        f"epsilon_zero={epsilon_zero:.2f}, epsilon_one={epsilon_one:.2f} sigma_offset={sigma_offset:.2f}, conf_time={conf_time_steps}, window_size={moving_average_window_size} - "+
-        f"Average Time Steps per Symbol: {time_steps/(NUMBER_OF_INITIAL_TRIALS*SYMBOLS_PER_TRIAL):.3f}. "+
-        "Ending Early.")
-    # We return the final error rate to the optimization function.
-    return (errors/(NUMBER_OF_INITIAL_TRIALS))
+        result = EventTriggeredCommunication.EventTriggeredTest(test_params)
+        errors += result.errors
+        time_steps += result.time_steps
+
+    avg_error = errors / NUMBER_OF_INITIAL_TRIALS
+    avg_time_per_symbol = time_steps / (NUMBER_OF_INITIAL_TRIALS * SYMBOLS_PER_TRIAL)
+
+    initial_cost = (
+        WEIGHT_CONSTANT * (avg_error / BASELINE_ERROR_RATE)
+        + (1 - WEIGHT_CONSTANT) * (avg_time_per_symbol / BASELINE_TIME_STEPS)
+    )
+
+    # Continue only if the preliminary cost is promising
+    if initial_cost <= INITIAL_COST_NEEDED_TO_CONTINUE:
+        for _ in range(NUMBER_OF_ADDITIONAL_TRIALS):
+            result = EventTriggeredCommunication.EventTriggeredTest(test_params)
+            errors += result.errors
+            time_steps += result.time_steps
+
+        total_trials = NUMBER_OF_INITIAL_TRIALS + NUMBER_OF_ADDITIONAL_TRIALS
+        avg_error = errors / total_trials
+        avg_time_per_symbol = time_steps / (total_trials * SYMBOLS_PER_TRIAL)
+
+        final_cost = (
+            WEIGHT_CONSTANT * (avg_error / BASELINE_ERROR_RATE)
+            + (1 - WEIGHT_CONSTANT) * (avg_time_per_symbol / BASELINE_TIME_STEPS)
+        )
+
+        print(
+            f"Achieved cost {final_cost:.3f} with params: "
+            f"epsilon_zero={epsilon_zero:.2f}, "
+            f"epsilon_one={epsilon_one:.2f}, "
+            f"sigma_offset={sigma_offset:.2f}, "
+            f"conf_time={conf_time_steps}, "
+            f"window_size={moving_average_window_size} - "
+            f"Average Error Rate: {avg_error:.3f}, "
+            f"Average Time Steps per Symbol: {avg_time_per_symbol:.3f}"
+        )
+
+        return final_cost
+
+    print(
+        f"Achieved cost {initial_cost:.3f} with params: "
+        f"epsilon_zero={epsilon_zero:.2f}, "
+        f"epsilon_one={epsilon_one:.2f}, "
+        f"sigma_offset={sigma_offset:.2f}, "
+        f"conf_time={conf_time_steps}, "
+        f"window_size={moving_average_window_size} - "
+        f"Average Error Rate: {avg_error:.3f}, "
+        f"Average Time Steps per Symbol: {avg_time_per_symbol:.3f}. "
+        f"Ending Early."
+    )
+
+    return initial_cost
 
 
-
-# These are the parameters to be passed into the cost function. Formatted as:
-#   [type (Real/Integer)]([min_value], [max_value], name="[parameter_name]") 
+# Parameters to optimize
 dimensions = [
     Real(0.01, 0.5, name="epsilon_zero"),
     Real(0.5, 2.0, name="epsilon_one"),
     Real(5.0, 20.0, name="sigma_offset"),
     Integer(10, 50, name="confidence_time_steps"),
     Integer(5, 30, name="moving_average_window_size"),
-    # Integer(999, 1000, name="max_time_steps"), Depreciated
 ]
 
-# This is the bayseian optimization function. 
-# Increasing n_initial_points will make it more likely to find a global min, while n_calls willhelp optimize whichever minimum it locates
-result = gp_minimize(findMinimumErrorRate, dimensions, n_calls = 120, n_initial_points=20)
 
+# Bayesian optimization
+result = gp_minimize(findMinimumCost, dimensions, n_calls=120, n_initial_points=20)
 print(f"Optimal parameters: {result.x}")
-print(f"Minimal error rate achieved: {result.fun}")
-
-'''
-
-'''
+print(f"Minimal cost achieved: {result.fun}")
