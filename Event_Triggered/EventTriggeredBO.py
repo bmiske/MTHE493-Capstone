@@ -12,21 +12,22 @@ SYMBOLS_PER_TRIAL = 64
 #   t0 = baseline time steps per symbol from other optimal algorithm
 
 def findMinimumCost(params):
-    NUMBER_OF_INITIAL_TRIALS = 10
-    INITIAL_COST_NEEDED_TO_CONTINUE = 1.0
-    NUMBER_OF_ADDITIONAL_TRIALS = 40
+    NUMBER_OF_INITIAL_TRIALS = 30
+    INITIAL_COST_NEEDED_TO_CONTINUE = 5.0
+    NUMBER_OF_ADDITIONAL_TRIALS = 70
 
-    WEIGHT_CONSTANT = 0.75
+    WEIGHT_CONSTANT = 0.25
     BASELINE_ERROR_RATE = 0.1
     BASELINE_TIME_STEPS = 150
 
     # Unpack parameters and create test configuration
-    epsilon_zero, epsilon_one, sigma_offset, conf_time_steps, moving_average_window_size = params
+    epsilon_zero, epsilon_one, sigma_offset, conf_time_steps, max_symbol_length, moving_average_window_size = params
     test_params = EventTriggeredParameters(
         epsilon_zero=epsilon_zero,
         epsilon_one=epsilon_one,
         sigma_offset=sigma_offset,
         confidence_time_steps=conf_time_steps,
+        max_steps_per_symbol=max_symbol_length,
         average_window_size=moving_average_window_size,
     )
 
@@ -82,6 +83,7 @@ def findMinimumCost(params):
         f"epsilon_one={epsilon_one:.2f}, "
         f"sigma_offset={sigma_offset:.2f}, "
         f"conf_time={conf_time_steps}, "
+        f"max_symb_size={max_symbol_length}, "
         f"window_size={moving_average_window_size} - "
         f"Average Error Rate: {avg_error:.3f}, "
         f"Average Time Steps per Symbol: {avg_time_per_symbol:.3f}. "
@@ -93,11 +95,12 @@ def findMinimumCost(params):
 
 # Parameters to optimize
 dimensions = [
-    Real(0.01, 0.5, name="epsilon_zero"),
-    Real(0.5, 2.0, name="epsilon_one"),
+    Real(0.01, 0.75, name="epsilon_zero"),
+    Real(0.75, 2.0, name="epsilon_one"),
     Real(5.0, 20.0, name="sigma_offset"),
     Integer(10, 50, name="confidence_time_steps"),
-    Integer(5, 30, name="moving_average_window_size"),
+    Integer(200, 1000, name="max_symbol_length"),
+    Integer(5, 50, name="moving_average_window_size"),
 ]
 
 
