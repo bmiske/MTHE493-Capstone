@@ -41,7 +41,7 @@ class EventTriggeredParameters:
     DEFAULT_EPSILON_ZERO = 0.25
     DEFAULT_EPSILON_ONE = 1.25
     DEFAULT_CONFIDENCE_TIME_STEPS = 20
-    DEFAULT_MAX_STEPS_PER_SYMBOL = 5000
+    DEFAULT_MAX_STEPS_PER_SYMBOL = 500
     DEFAULT_AVERAGE_WINDOW_SIZE = 10
 
     def __init__(
@@ -253,3 +253,36 @@ class EventTriggeredCommunication:
         num_time_steps = len(times)
         result = EventTriggeredTestResults(num_errors, num_time_steps)
         return(result)
+    
+
+EPSILON_ONE = 1.0888
+EPSILON_ZERO = 0.3097
+SIGMA_OFFSET = 11.9933
+CONF_TIME_STEPS = 17
+WINDOW_SIZE = 5
+
+SYMBOLS_PER_TRIAL = 64
+
+NUMBER_OF_TRIALS = 200
+
+test_params = EventTriggeredParameters(
+        epsilon_zero=EPSILON_ZERO,
+        epsilon_one=EPSILON_ONE,
+        sigma_offset=SIGMA_OFFSET,
+        confidence_time_steps=CONF_TIME_STEPS,
+        average_window_size=WINDOW_SIZE,
+        
+    )
+
+errors = 0
+time_steps = 0
+
+for _ in range(NUMBER_OF_TRIALS):
+    result = EventTriggeredCommunication.EventTriggeredTest(test_params)
+    errors += result.errors
+    time_steps += result.time_steps
+
+avg_error = errors / NUMBER_OF_TRIALS
+avg_time_per_symbol = time_steps / (NUMBER_OF_TRIALS * SYMBOLS_PER_TRIAL)
+
+print(f"Error Rate: {avg_error} - Time per Symbol: {avg_time_per_symbol}")
