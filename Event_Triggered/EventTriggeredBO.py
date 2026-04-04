@@ -16,8 +16,8 @@ def findMinimumCost(params):
     INITIAL_COST_NEEDED_TO_CONTINUE = 5.0
     NUMBER_OF_ADDITIONAL_TRIALS = 70
 
-    WEIGHT_CONSTANT = 0.25
-    BASELINE_ERROR_RATE = 0.1
+    WEIGHT_CONSTANT = 0.75
+    BASELINE_ERROR_RATE = 0.0042
     BASELINE_TIME_STEPS = 150
 
     # Unpack parameters and create test configuration
